@@ -1,4 +1,48 @@
-class Sensor {}
+class Sensor {
+    constructor(id, name, type, value, unit, updated_at) {
+        this.id = id;
+        this.name = name;
+        this.type = type;
+        this.value = value;
+        this.unit = unit;
+        this.updated_at = updated_at;
+    }
+
+
+    get type() {
+        return this._type;
+    }
+
+    set type(value) {
+        if (["temperature", "humidity", "pressure"].includes(value)) {
+            this._type = value;
+        } else {
+            throw new Error("Tipo de sensor no válido");
+        }
+    }
+
+    get value() {
+        return this._value;
+    }
+
+    set value(value) {
+        this._value = value;
+    }
+
+    get updated_at() {
+        return this._updated_at;
+    }
+
+    set updated_at(value) {
+        this._updated_at = value;
+    }
+
+    set updateValue(newValue) {
+        this.value = newValue;
+        this.updated_at = new Date().toISOString();
+    }
+}
+
 
 class SensorManager {
     constructor() {
@@ -9,6 +53,9 @@ class SensorManager {
         this.sensors.push(sensor);
     }
 
+    loadSensor() {
+
+    }
     updateSensor(id) {
         const sensor = this.sensors.find((sensor) => sensor.id === id);
         if (sensor) {
@@ -33,7 +80,37 @@ class SensorManager {
         }
     }
 
-    async loadSensors(url) {}
+
+    async loadSensors(url) {
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            data.forEach((sensorData) => {
+                try {
+                    const sensor = new Sensor(
+                        sensorData.id,
+                        sensorData.name,
+                        sensorData.type,
+                        sensorData.value,
+                        sensorData.unit,
+                        sensorData.updated_at
+                    );
+                    this.addSensor(sensor);
+                } catch (error) {
+                    console.error(`Error al cargar el sensor con ID ${sensorData.id}:`, error);
+                    const errorMenssage = document.createElement("error-message");
+                    errorMenssage.textContent = `Error al cargar el sensor con ID ${sensorData.id}: ${error.message}`;
+                    errorMenssage.style.color = "block";
+                }
+            });
+            this.render();
+        } catch (error) {
+            console.error("Error al cargar los sensores", error);
+            const errorMenssage = document.createElement("error-message");
+            errorMenssage.textContent = `Error al cargar los sensores: ${error.message}`;
+            errorMenssage.style.color = "block";
+        }
+    }
 
     render() {
         const container = document.getElementById("sensor-container");
@@ -60,14 +137,13 @@ class SensorManager {
                         </div>
                         <time datetime="${sensor.updated_at}">
                             Última actualización: ${new Date(
-                                sensor.updated_at
-                            ).toLocaleString()}
+                sensor.updated_at
+            ).toLocaleString()}
                         </time>
                     </div>
                     <footer class="card-footer">
-                        <a href="#" class="card-footer-item update-button" data-id="${
-                            sensor.id
-                        }">Actualizar</a>
+                        <a href="#" class="card-footer-item update-button" data-id="${sensor.id
+                }">Actualizar</a>
                     </footer>
                 </div>
             `;
